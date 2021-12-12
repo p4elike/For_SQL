@@ -1,14 +1,14 @@
 
 create table if not exists genre_music (
-	id_genre integer primary key,
-	genre_name varchar(40) unique not null,
-	id_performer integer references performers(id)
+	id integer primary key,
+	genre_name varchar(40) unique not null
 );
 
-
+drop table performers 
 create table if not exists performers (
 	id integer primary key,
 	performers_name text unique
+	genre_id integer references genre_music(id)
  );
 
 
