@@ -1,0 +1,27 @@
+
+create table if not exists genre_music (
+	id_genre integer primary key,
+	genre_name varchar(40) unique not null,
+	id_performer integer references performers(id)
+);
+
+
+create table if not exists performers (
+	id integer primary key,
+	performers_name text unique
+ );
+
+
+create table if not exists albums (
+	id integer primary key,
+	album_name text not null,
+	reLease_year integer,
+	id_performer integer references performers(id)
+ );
+ 
+create table if not exists music (
+	id integer primary key,
+	music_name text not null,
+	duration integer,
+	id_album integer references albums(id)
+ );
