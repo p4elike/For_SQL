@@ -4,7 +4,7 @@ create table if not exists genre_music (
 	genre_name varchar(40) unique not null
 );
 
-drop table performers 
+
 create table if not exists performers (
 	id integer primary key,
 	performers_name text unique
