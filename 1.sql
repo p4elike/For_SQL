@@ -1,7 +1,8 @@
 
 create table if not exists genre_music (
 	id integer primary key,
-	genre_name varchar(40) unique not null
+	genre_name varchar(40) unique not null,
+	performers_id integer
 );
 
 
