@@ -3,7 +3,7 @@ from pprint import pprint
 
 engine = create_engine('postgresql://postgres:070777@localhost:5432/postgres', pool_pre_ping=True)
 connection = engine.connect()
-#
+
 
 # connection.execute("""INSERT INTO performer(id, performers_name)
 #                       VALUES(1, 'Макс Корж');
@@ -266,3 +266,72 @@ sel5 = connection.execute("""SELECT performers_name FROM performer
 sel6 = connection.execute("""SELECT music_name FROM music
                                WHERE music_name LIKE '%%мужик%%';
                             """)
+# Домашнее задание к лекции «Группировки, выборки из нескольких таблиц»
+sel21 = connection.execute("""SELECT COUNT(genre_id), genre_name FROM genre_performer GP
+                              RIGHT JOIN genre_music ON GP.genre_id = genre_music.id                
+                              GROUP BY genre_id, genre_name;
+                              """)
+# количество треков, вошедших в альбомы 2015-2020 годов;
+sel22 = connection.execute("""SELECT COUNT(id_album), album_name FROM music M                       
+                              RIGHT JOIN album ON M.id_album = album.id   
+                              WHERE release_year BETWEEN 2015 AND 2020             
+                              GROUP BY id_album, album_name;
+                              """)
+# средняя продолжительность треков по каждому альбому
+sel23 = connection.execute("""SELECT AVG(duration), album_name FROM music M                       
+                              RIGHT JOIN album ON M.id_album = album.id          
+                              GROUP BY id_album, album_name;
+                              """)
+# все исполнители, которые не выпустили альбомы в 2020 году;
+sel24 = connection.execute("""SELECT performers_name FROM performer P                       
+                              JOIN albums_performers ON P.id = performer_id
+                              JOIN album ON album.id = albums_id  
+                              WHERE release_year != 2020
+                              GROUP BY performers_name 
+                              """)
+# названия сборников, в которых присутствует конкретный исполнитель (выберите сами);
+sel25 = connection.execute("""SELECT digest_name FROM digest D                       
+                              JOIN music_digest MD ON D.id = MD.digest_id
+                              JOIN music ON music.id = MD.music_id
+                              JOIN album ON album.id = music.id_album
+                              JOIN albums_performers AP ON album.id = AP.albums_id
+                              JOIN performer P ON AP.performer_id = P.id
+                              WHERE performers_name = 'Король и Шут'
+                              GROUP BY digest_name; 
+                              """)
+# название альбомов, в которых присутствуют исполнители более 1 жанра;
+sel26 = connection.execute("""SELECT album_name FROM album                       
+                              JOIN albums_performers AP ON album.id = AP.albums_id
+                              JOIN performer P ON AP.performer_id = P.id
+                              JOIN genre_performer GP ON P.id = GP.performer_id
+                              JOIN genre_music GM ON GP.genre_id = GM.id
+                              GROUP BY album_name;
+                              """)
+# наименование треков, которые не входят в сборники;
+# connection.execute("""INSERT INTO music(id, music_name, duration, id_album)
+#                       VALUES(16, 'Там ревели горы', 176, 3) ;
+#                       """)
+
+sel27 = connection.execute("""SELECT music_name FROM music
+                              LEFT JOIN music_digest MD ON music.id = MD.music_id
+                              WHERE MD.music_id IS NULL;
+                              """)
+
+# исполнителя(-ей), написавшего самый короткий по продолжительности трек (теоретически таких треков может быть несколько)
+
+sel28 = connection.execute("""SELECT performers_name FROM performer P
+                              JOIN albums_performers AP ON P.id = AP.performer_id 
+                              JOIN album A ON AP.albums_id = A.id                           
+                              JOIN music M ON A.id = M.id_album
+                              WHERE duration = (
+                                 SELECT MIN(duration) FROM music);
+                              """)
+# название альбомов, содержащих наименьшее количество треков.
+sel29 = connection.execute("""SELECT album_name, COUNT(id_album) FROM album
+                              FULL OUTER JOIN music ON music.id_album = album.id                                                  
+                              GROUP BY album_name, id_album
+                              ORDER BY id_album DESC
+                              LIMIT 3;
+                              """)
+for x in sel29:
+    pprint(x)
