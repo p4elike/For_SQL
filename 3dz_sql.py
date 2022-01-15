@@ -193,9 +193,7 @@ connection = engine.connect()
 # connection.execute("""INSERT INTO genre_performer(performer_id, genre_id)
 #                           VALUES(7, 2) ;
 #                       """)
-# connection.execute("""INSERT INTO genre_performer(performer_id, genre_id)
-#                           VALUES(7, 2) ;
-#                       """)
+
 
 
 # connection.execute("""INSERT INTO music_digest(music_id, digest_id)
@@ -266,6 +264,7 @@ sel5 = connection.execute("""SELECT performers_name FROM performer
 sel6 = connection.execute("""SELECT music_name FROM music
                                WHERE music_name LIKE '%%мужик%%';
                             """)
+
 # Домашнее задание к лекции «Группировки, выборки из нескольких таблиц»
 sel21 = connection.execute("""SELECT COUNT(genre_id), genre_name FROM genre_performer GP
                               RIGHT JOIN genre_music ON GP.genre_id = genre_music.id                
@@ -282,14 +281,16 @@ sel23 = connection.execute("""SELECT AVG(duration), album_name FROM music M
                               RIGHT JOIN album ON M.id_album = album.id          
                               GROUP BY id_album, album_name;
                               """)
-# все исполнители, которые не выпустили альбомы в 2020 году;
-sel24 = connection.execute("""SELECT performers_name FROM performer P                       
-                              JOIN albums_performers ON P.id = performer_id
-                              JOIN album ON album.id = albums_id  
-                              WHERE release_year != 2020
-                              GROUP BY performers_name 
+# все исполнители, которые не выпустили альбомы в 2002 году;
+sel24 = connection.execute("""SELECT performers_name FROM performer P
+                              WHERE performers_name NOT IN (
+                                    SELECT performers_name FROM performer P
+                                    JOIN albums_performers AP ON AP.performer_id = P.id
+                                    JOIN album A ON A.id = AP.albums_id  
+                                    WHERE release_year = 2002)
+                              GROUP BY performers_name;
                               """)
-# названия сборников, в которых присутствует конкретный исполнитель (выберите сами);
+# названия сборников, в которых присутствует конкретный исполнитель (Король и Шут);
 sel25 = connection.execute("""SELECT digest_name FROM digest D                       
                               JOIN music_digest MD ON D.id = MD.digest_id
                               JOIN music ON music.id = MD.music_id
@@ -300,12 +301,14 @@ sel25 = connection.execute("""SELECT digest_name FROM digest D
                               GROUP BY digest_name; 
                               """)
 # название альбомов, в которых присутствуют исполнители более 1 жанра;
-sel26 = connection.execute("""SELECT album_name FROM album                       
+sel26 = connection.execute("""SELECT album_name FROM album
                               JOIN albums_performers AP ON album.id = AP.albums_id
                               JOIN performer P ON AP.performer_id = P.id
                               JOIN genre_performer GP ON P.id = GP.performer_id
                               JOIN genre_music GM ON GP.genre_id = GM.id
-                              GROUP BY album_name;
+                              WHERE 
+                                    (SELECT COUNT(performer_id) FROM genre_performer) > 1
+                              GROUP BY album_name     
                               """)
 # наименование треков, которые не входят в сборники;
 # connection.execute("""INSERT INTO music(id, music_name, duration, id_album)
@@ -327,11 +330,14 @@ sel28 = connection.execute("""SELECT performers_name FROM performer P
                                  SELECT MIN(duration) FROM music);
                               """)
 # название альбомов, содержащих наименьшее количество треков.
-sel29 = connection.execute("""SELECT album_name, COUNT(id_album) FROM album
+sel29 = connection.execute("""SELECT album_name FROM album
                               FULL OUTER JOIN music ON music.id_album = album.id                                                  
-                              GROUP BY album_name, id_album
-                              ORDER BY id_album DESC
-                              LIMIT 3;
+                              GROUP BY album_name
+                              HAVING COUNT(music_name) = (
+                                    SELECT COUNT(music_name) FROM music 
+                                    GROUP BY id_album 
+                                    ORDER BY id_album DESC
+                                    LIMIT 1)
                               """)
 for x in sel29:
     pprint(x)
